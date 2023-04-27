@@ -25,7 +25,6 @@ def register_arguments():
         '-c', '--c3-holder',
         help='The DUT holder on C3. Please feed the launchpad id',
         type=str,
-        required=True,
         default='kevinyeh'
     )
     return parser.parse_args()
