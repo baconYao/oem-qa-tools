@@ -22,11 +22,14 @@ DEPENDENCIES=("Jira" "GoogleSheet")
 # Check dependency api
 check_dependency_api()
 {
-    for dependency in ${DEPENDENCIES[@]}; do
+    for dependency in "${DEPENDENCIES[@]}"; do
+        # Copy the dependency if it doesn't exist
         if [ ! -d "./$dependency" ]; then
-            echo "Error: no dependency \"$dependency\" api found."
-            echo "Please check the README first"
-            return 1
+            echo "Copying the dependency \"$dependency\" ..."
+	    if ! cp -r "../API/$dependency" .; then
+                echo "Error: fail to copy the dependency \"$dependency\""
+                return 1
+            fi
         fi
     done
     return 0
@@ -40,18 +43,18 @@ in_python_venv()
 
     # Enter virtual env
     echo "Entering the virtual environment ..."
-    . $VENV/bin/activate
+    # shellcheck disable=SC1091
+    . "${VENV}/bin/activate"
 
     # Check we're in virtual env
     echo "Checking we are in virtual environment or not..."
-    echo $VIRTUAL_ENV | grep -i $VENV
-    if [[ "$?" -ne 0 ]]; then
+    if ! echo "${VIRTUAL_ENV}" | grep -i "${VENV}"; then
         echo "Error: Got problem of active virtual environment"
         return 1
     fi
 
     # Install python packages
-    for dependency in ${DEPENDENCIES[@]}; do
+    for dependency in "${DEPENDENCIES[@]}"; do
         pathOfRequirements="./$dependency/requirements.txt"
         if [ -f "$pathOfRequirements" ]; then
             pip install -r "$pathOfRequirements"
