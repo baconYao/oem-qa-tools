@@ -416,6 +416,11 @@ class QaPcJira():
         # Assign lable to story task
         fields['labels'] = self.fixed_labels
 
+        # Assign Epic
+        fields['parent'] = {
+            'id': self.jira_api.jira_project['epic'][self.epic]
+        }
+
         # Create issue
         response = self.jira_api.create_an_issue(
             payload={'fields': fields, 'updates': {}})
@@ -423,10 +428,6 @@ class QaPcJira():
             logger.warn('  - Story task ... Fail')
             return {}
         story_task = json.loads(response.text)
-
-        # Update Epic
-        self.jira_api.update_epic(
-            epic=self.epic, issues_id=[int(story_task['id'])])
 
         return story_task
 
@@ -470,23 +471,12 @@ class QaPcJira():
                     self.project_profile['labels']['rts_labels'][idx]
                 )
 
-            # FIXME: Use regex to verify the valid time format
-            # date_regex = datetime.datetime.strptime
-            if 'start_date' in self.current_platform and \
-                    self.current_platform['start_date'][idx]:
-                fields['customfield_10015'] = \
-                    self.current_platform['start_date'][idx]
+            # Assign Epic
+            fields['parent'] = {
+                'id': self.jira_api.jira_project['epic'][self.epic]
+            }
 
-            if 'end_date' in self.current_platform and \
-                    self.current_platform['end_date'][idx]:
-                fields['duedate'] = self.current_platform['end_date'][idx]
-
-            # link task to story task
-            update_link = self.jira_api.create_link_issue_content(
-                target_issues=[{'key': story_task['key']}]) \
-                if story_task['key'] else {}
-
-            issue_updates.append({'fields': fields, 'update': update_link})
+            issue_updates.append({'fields': fields, 'update': {}})
 
         response = self.jira_api.create_issues(
             payload={'issueUpdates': issue_updates})
@@ -495,9 +485,12 @@ class QaPcJira():
             return {}
 
         milestone_tasks = json.loads(response.text)['issues']
-        ids = [int(task['id']) for task in milestone_tasks]
-        # Update Epic
-        self.jira_api.update_epic(epic=self.epic, issues_id=ids)
+        issue_ids = [int(task['id']) for task in milestone_tasks]
+        for issue_id in issue_ids:
+            self.jira_api.link_issue(
+                id_of_inward_issue=issue_id,
+                id_of_outward_issue=story_task['id']
+            )
 
         return milestone_tasks
 
@@ -531,24 +524,24 @@ class QaPcJira():
                 self.project_profile['labels']['prts_labels']
             )
 
-        # link task to story task
-        update_link = {}
-        if story_task:
-            update_link = self.jira_api.create_link_issue_content(
-                target_issues=[{'key': story_task['key']}]) \
-                if story_task['key'] else {}
+        # Assign Epic
+        fields['parent'] = {
+            'id': self.jira_api.jira_project['epic'][self.epic]
+        }
 
         response = self.jira_api.create_an_issue(
-            payload={'fields': fields, 'update': update_link})
+            payload={'fields': fields, 'update': {}})
 
         if not response.ok:
             logger.warn('Failed to create task...')
             return
 
-        id = json.loads(response.text)['id']
+        issue_id = json.loads(response.text)['id']
+        self.jira_api.link_issue(
+            id_of_inward_issue=issue_id,
+            id_of_outward_issue=story_task['id']
+        )
 
-        # Update Epic
-        self.jira_api.update_epic(epic=self.epic, issues_id=[id])
         return json.loads(response.text)
 
     def _create_online_update_task(self, story_task={}):
@@ -581,24 +574,24 @@ class QaPcJira():
                 self.project_profile['labels']['online_update_labels']
             )
 
-        # link task to story task
-        update_link = {}
-        if story_task:
-            update_link = self.jira_api.create_link_issue_content(
-                target_issues=[{'key': story_task['key']}]) \
-                if story_task['key'] else {}
+        # Assign Epic
+        fields['parent'] = {
+            'id': self.jira_api.jira_project['epic'][self.epic]
+        }
 
         response = self.jira_api.create_an_issue(
-            payload={'fields': fields, 'update': update_link})
+            payload={'fields': fields, 'update': {}})
 
         if not response.ok:
             logger.warn('Failed to create task...')
             return
 
-        id = json.loads(response.text)['id']
+        issue_id = json.loads(response.text)['id']
+        self.jira_api.link_issue(
+            id_of_inward_issue=issue_id,
+            id_of_outward_issue=story_task['id']
+        )
 
-        # Update Epic
-        self.jira_api.update_epic(epic=self.epic, issues_id=[id])
         return json.loads(response.text)
 
     def _create_transfer_to_cert_task(self, story_task={}):
@@ -631,24 +624,24 @@ class QaPcJira():
             "content": TEMPLATE_TEST_RESULT_FIELD
         }
 
-        # link task to story task
-        update_link = {}
-        if story_task:
-            update_link = self.jira_api.create_link_issue_content(
-                target_issues=[{'key': story_task['key']}]) \
-                if story_task['key'] else {}
+        # Assign Epic
+        fields['parent'] = {
+            'id': self.jira_api.jira_project['epic'][self.epic]
+        }
 
         response = self.jira_api.create_an_issue(
-            payload={'fields': fields, 'update': update_link})
+            payload={'fields': fields, 'update': {}})
 
         if not response.ok:
             logger.warn('Failed to create task...')
             return
 
-        id = json.loads(response.text)['id']
+        issue_id = json.loads(response.text)['id']
+        self.jira_api.link_issue(
+            id_of_inward_issue=issue_id,
+            id_of_outward_issue=story_task['id']
+        )
 
-        # Update Epic
-        self.jira_api.update_epic(epic=self.epic, issues_id=[id])
         return json.loads(response.text)
 
     def _get_story_task_by_tag(self):
