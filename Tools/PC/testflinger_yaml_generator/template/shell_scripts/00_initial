@@ -36,21 +36,28 @@ wait_for_ssh() {{
     done
 }}
 
+DCD=$(_run ubuntu-report show | grep \"DCD\": | awk '{print $2}')
 
 echo
 echo "====== TARGET DEVICE CONNECTION INFO ======"
 echo
 echo DEVICE_IP: $TARGET_DEVICE_USERNAME@"$DEVICE_IP"
+echo DCD: "$DCD"
 echo
 echo "==========================================="
 echo
 
-_run sudo amixer set Master unmute
-_run sudo amixer set Master 100
-_run sudo amixer set Speaker 100
-_run sudo amixer -c 1 set Master unmute
-_run sudo amixer -c 1 set Master 100
-_run sudo amixer -c 1 set Speaker 100
+mkdir -p artifacts
+echo "$DCD" > artifacts/dcd.info
+echo "Files in artifacts:"
+ls artifacts
+
+_run amixer set Master unmute
+_run amixer set Master 100
+_run amixer set Speaker 100
+_run amixer -c 1 set Master unmute
+_run amixer -c 1 set Master 100
+_run amixer -c 1 set Speaker 100
 
 _run gsettings set org.gnome.desktop.screensaver ubuntu-lock-on-suspend false
 _run gsettings set org.gnome.desktop.screensaver lock-enabled false
